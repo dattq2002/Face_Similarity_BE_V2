@@ -1,24 +1,24 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from deepface import DeepFace
-import shutil
-import os
 import uuid
+import numpy as np
+import cv2
+import base64
+import traceback
 
 app = Flask(__name__)
-CORS(app)  # Cho phép CORS tất cả domain
+CORS(app)
 
-model = None
-
-# @app.before_first_request
-# def load_model_once():
-#     global model
-#     model = DeepFace.build_model("VGG-Face")  # Hoặc "Facenet", "ArcFace" tùy chọn
-#     print("✅ Model đã load xong")
+# ✅ Hàm chuyển file ảnh từ request thành ảnh OpenCV (không lưu vào đĩa)
+def read_image(file_storage):
+    image_bytes = file_storage.read()
+    np_arr = np.frombuffer(image_bytes, np.uint8)
+    return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
 @app.route('/')
 def index():
-    return jsonify(message="Welcome to the Face Similarity API! Use /compare endpoint to compare two images.")
+    return jsonify(message="Welcome to the Face Similarity API! Use POST /compare with img1 & img2.")
 
 @app.route('/compare', methods=['POST'])
 def compare():
@@ -26,34 +26,24 @@ def compare():
         if 'img1' not in request.files or 'img2' not in request.files:
             return jsonify({'error': 'Missing files'}), 400
 
-        img1_file = request.files['img1']
-        img2_file = request.files['img2']
+        # ✅ Đọc ảnh trực tiếp từ RAM
+        img1 = read_image(request.files['img1'])
+        img2 = read_image(request.files['img2'])
 
-        # Tạo thư mục và tên file tạm
-        os.makedirs("temp", exist_ok=True)
-        img1_path = f"temp/{uuid.uuid4()}.jpg"
-        img2_path = f"temp/{uuid.uuid4()}.jpg"
+        result = DeepFace.verify(img1, img2, model_name="VGG-Face", enforce_detection=False)
 
-        # Lưu file
-        img1_file.save(img1_path)
-        img2_file.save(img2_path)
-
-        # Gọi DeepFace
-        result = DeepFace.verify(img1_path, img2_path, enforce_detection=False, model_name="VGG-Face")
         distance = result.get("distance", None)
-        similarity_percentage = None
-        if distance is not None:
-            similarity_percentage = round((1 - distance) * 100, 2)
-
-        # Xoá file tạm
-        os.remove(img1_path)
-        os.remove(img2_path)
-
+        similarity_percentage = round((1 - distance) * 100, 2) if distance is not None else None
         result["similarity_percentage"] = similarity_percentage
+
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # ✅ In lỗi chi tiết khi cần debug
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
