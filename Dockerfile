@@ -25,4 +25,5 @@ EXPOSE 5000
 
 # Dùng Gunicorn để chạy Flask app trong production
 # Giả sử trong file face_similarity.py có: app = Flask(__name__)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "face_similarity:app"]
+CMD ["gunicorn", "-w", "1", "-t", "300", "-b", "0.0.0.0:5000", "face_similarity:app"]
+

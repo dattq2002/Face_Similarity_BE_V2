@@ -4,7 +4,7 @@ from deepface import DeepFace
 import uuid
 import numpy as np
 import cv2
-import base64
+import os
 import traceback
 
 app = Flask(__name__)
@@ -26,14 +26,29 @@ def compare():
         if 'img1' not in request.files or 'img2' not in request.files:
             return jsonify({'error': 'Missing files'}), 400
 
-        # ✅ Đọc ảnh trực tiếp từ RAM
-        img1 = read_image(request.files['img1'])
-        img2 = read_image(request.files['img2'])
+        img1_file = request.files['img1']
+        img2_file = request.files['img2']
 
-        result = DeepFace.verify(img1, img2, model_name="VGG-Face", enforce_detection=False)
+        # Tạo thư mục và tên file tạmAdd commentMore actions
+        os.makedirs("temp", exist_ok=True)
+        img1_path = f"temp/{uuid.uuid4()}.jpg"
+        img2_path = f"temp/{uuid.uuid4()}.jpg"
 
+        # Lưu file
+        img1_file.save(img1_path)
+        img2_file.save(img2_path)
+
+        # Gọi DeepFace
+        result = DeepFace.verify(img1_path, img2_path, enforce_detection=False, model_name="VGG-Face")
         distance = result.get("distance", None)
-        similarity_percentage = round((1 - distance) * 100, 2) if distance is not None else None
+        similarity_percentage = None
+        if distance is not None:
+            similarity_percentage = round((1 - distance) * 100, 2)
+
+        # Xoá file tạm
+        os.remove(img1_path)
+        os.remove(img2_path)
+
         result["similarity_percentage"] = similarity_percentage
 
         return jsonify(result)
