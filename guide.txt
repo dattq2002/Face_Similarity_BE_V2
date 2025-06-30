@@ -1,2 +1,3 @@
-pip install fastapi uvicorn deepface python-multipart fastapi[all]
-uvicorn face_similarity:app --host 0.0.0.0 --port 3000
+pip install flask flask-cors deepface
+
+python face_similarity.py
