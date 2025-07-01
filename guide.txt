@@ -1,3 +1,0 @@
-pip install flask flask-cors deepface opencv-python-headless
-
-python face_similarity.py
