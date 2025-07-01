@@ -1,6 +1,7 @@
-Flask
-flask-cors
-deepface
+flask
 opencv-python-headless
-numpy
 tensorflow
+tf-keras
+deepface
+pillow
+numpy
