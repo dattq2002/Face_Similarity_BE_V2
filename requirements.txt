@@ -1,6 +1,6 @@
 Flask
 flask-cors
 deepface
-opencv-python
+opencv-python-headless
 numpy
 tensorflow
