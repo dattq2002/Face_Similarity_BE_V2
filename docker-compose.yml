@@ -4,19 +4,7 @@ services:
   face-api:
     build: .
     ports:
-      - "5000:5000"
+      - "8000:5000" # API chạy trên port 8000
     environment:
       - FLASK_ENV=production
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl # Nếu có SSL
-    depends_on:
-      - face-api
     restart: unless-stopped
