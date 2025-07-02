@@ -1,7 +1,8 @@
-flask
-opencv-python-headless
+fastapi
+uvicorn
+python-multipart
+opencv-python
 tensorflow
 tf-keras
 deepface
-pillow
 numpy
